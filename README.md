@@ -31,6 +31,10 @@ Given a dictionary (a list of words), design an algorithm to find the optimal wa
 
 For example, the string "jesslookedjustliketimherbrother" would be optimally parsed as "JESS looked just like TIM her brother". This parsing has seven unrecognized characters, which we have capitalised for clarity.
 
+## Requirements
+
+- Python 2.7 or 3.6
+- pip
 
 ## Installation
 
@@ -89,6 +93,7 @@ Unrecognized characters:  13
 
 ## Remarks
 
-- This tool implements an algorithm for word segmentation based on [Peter Norwig's work](http://norvig.com/ipython/).
+- This tool implements an algorithm for word segmentation using bigrams and conditional probability.
+- This implementation was based on [Peter Norwig's work](http://norvig.com/ipython/).
 - It doesn't always output the optimal solution, but it comes close to what a human would expect.
-- Changing 
+- Changing the `--max-length` argument can provide various results for the same input.
