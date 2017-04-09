@@ -8,6 +8,7 @@ DICT_FILE_SIZE = 31344016
 last_percent_reported = None
 
 def read_dict_file(filename=DICT_FILE):
+    """Open zipfile read all data and return"""
     with zipfile.ZipFile(filename) as f:
         name = f.namelist()[0]
         data = f.read(name)
