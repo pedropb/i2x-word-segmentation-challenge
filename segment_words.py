@@ -17,16 +17,16 @@ P_WORDS = {}
 
 def count_words(text):
     """Count word occurences"""
-    words = text.split(" ")
+    words = text.split(' ')
     return dict(Counter(words).most_common())
 
 def count_bigrams(text):
     """Count bigram occurences"""
-    words = text.split(" ")
-    bigrams = [b for b in zip(words[:-1], words[1:])]
+    words = text.split(' ')
+    bigrams = [' '.join(b) for b in zip(words[:-1], words[1:])]
     return dict(Counter(bigrams).most_common())
 
-def process_dict(text):
+def process_dict(text, force_count=False):
     """
     Process the dictionary and returns:
         - a occurence counter for every word in _text_.
@@ -40,25 +40,23 @@ def process_dict(text):
     """
 
     BIGRAM_COUNT_PICKLE = "bigram_count.pickle"
-    BIGRAM_COUNT = 4146849
     WORD_COUNT_PICKLE = "word_count.pickle"
-    WORD_COUNT = 253855
 
     # Try to load previous word_count
-    word_count = load_pickle(WORD_COUNT_PICKLE, WORD_COUNT)
+    word_count = load_pickle(WORD_COUNT_PICKLE)
     
     # if can't load pickle, then count words and save pickle
-    if word_count == None:
-        print("Pickle file not found. Counting words...")
+    if word_count == None or force_count:
+        print("Counting words...")
         word_count = count_words(text)
         save_pickle(word_count, WORD_COUNT_PICKLE)
 
     # Try to load previous bigram_count
-    bigram_count = load_pickle(BIGRAM_COUNT_PICKLE, BIGRAM_COUNT)
+    bigram_count = load_pickle(BIGRAM_COUNT_PICKLE)
 
     # if can't load pickle, then count bigrams and save pickle
-    if bigram_count == None:
-        print("Pickle file not found. Counting bigrams...")
+    if bigram_count == None or force_count:
+        print("Counting bigrams...")
         bigram_count = count_bigrams(text)
         save_pickle(bigram_count, BIGRAM_COUNT_PICKLE)
     
@@ -70,23 +68,23 @@ def process_dict(text):
 def prob(counter):
     """Probability of occurrence of each element from a counter."""
     corpus_size = sum(counter.values())
-    return lambda el: float(counter[el]) / corpus_size
+    return lambda el: float(counter[el]) / corpus_size if el in counter else 0.0
 
 def prob_bigrams(words, prev='^', ):
     """Probability of occurrence of a sequence of words, using bigram counter."""
     return reduce(operator.mul,  
-        (cond_prob(w, (prev if (i == 0) else words[i-1]) )
-                   for (i, w) in enumerate(words)),
-        initial=1)
+        [cond_prob(w, (prev if (i == 0) else words[i-1]) )
+                   for (i, w) in enumerate(words)],
+        1)
 
 def prob_words(words):
     """Probability of occurrence of words (assuming they are independent of each others)"""
-    return reduce(operator.mul, [P_WORDS(w) for w in words], initial=1)
+    return reduce(operator.mul, [P_WORDS(w) for w in words], 1)
 
 def cond_prob(word, prev):
     """Conditional probability of word given previous word."""
     
-    bigram = (prev, word)
+    bigram = str(prev) + ' ' + str(word)
     if P_BIGRAMS(bigram) > 0 and P_WORDS(prev) > 0:
         return float(P_BIGRAMS(bigram)) / P_WORDS(prev)
     else: # non-zero probability
@@ -94,7 +92,7 @@ def cond_prob(word, prev):
 
 
 @memoize
-def segment_words(text, previous='^'):
+def segment_words(text, previous='^', length=13):
     """
     Given a previous word, select the next word with the highest probability
     based on bigram counts.
@@ -103,14 +101,14 @@ def segment_words(text, previous='^'):
         return []
     else:
         candidates = [[first] + segment_words(rest, first) 
-                      for (first, rest) in split_text(text, 1)]
+                      for (first, rest) in split_text(text, 1, length)]
 
         return max(
             candidates, 
             key=lambda words: prob_bigrams(words, previous)
         )
 
-def split_text(text, start=0, length=20):
+def split_text(text, start=0, length=13):
     """
     Parses a string of text returning all combination of pairs
     with lengths varying from _start_ to _length_
@@ -120,11 +118,12 @@ def split_text(text, start=0, length=20):
 
 def mark_unknown_words(segmented_text, dictionary):
     """Transform words not present in the dictionary to uppercase."""
-    result = segmented_text.upper()
-    for word in dictionary:
-        result = result.replace(word.strip().upper(), word.strip().lower())
+    words = segmented_text.upper().split(" ")
+    for i, w in enumerate(words):
+        if w.lower() in dictionary:
+            words[i] = w.lower()
 
-    return result.strip()
+    return ' '.join(words)
 
 def accuracy(text):
     """Returns the number of unrecognized characters"""
@@ -134,21 +133,21 @@ def main(argv):
     # Configuring arguments    
     parser = argparse.ArgumentParser(
         description=(
-            "Unconcatenate words from a string based on a given dictionary. Words not present on "
+            "Segment words from a string based on a given dictionary. Words not present on "
             "the dictionary will be written in UPPERCASE on the output and will count towards "
-            "the number of unrecognized characters. Outputs: the unconcatenated string and the "
-            "number of unrecongized characters." 
+            "the number of unrecognized characters. Outputs: the segmented string and the "
+            "number of unrecognized characters." 
         )
     )
 
     parser.add_argument("concatenated_file", metavar="concatenated_file", type=str, 
         help="File containing the string with all words concatenated")
 
-    parser.add_argument("-t", "--frequency-threshold", dest="frequency_threshold", type=float, default=0.001, 
-        help=(
-            "Frequency threshold (in %%) for considering words from the corpus dictionary (Default: 0.001)."
-            " For example, words that appear on the corpus dictionary less than 0.001%% won't be used."
-        ), required=False)
+    parser.add_argument("-f", "--force", dest="force", action="store_true", default=False,
+        help="Force recount of words and bigrams (ignores pickle file)", required=False)
+
+    parser.add_argument("-l", "--max-length", dest="max_length", type=int, default=13,
+        help="The maximum length of words for matching", required=False)
 
     # Parsing arguments
     args = parser.parse_args()
@@ -159,6 +158,10 @@ def main(argv):
         sys.exit(1)
 
     try:
+        # retrieving args
+        force = args.force
+        max_length = args.max_length
+
         # Download DICT FILE
         dict_file = dataset_tools.maybe_download()
 
@@ -189,7 +192,7 @@ def main(argv):
             print("concatenated_file is empty.")
               
         print("Processing dictionary. This might take a while.")
-        word_count, bigram_count = process_dict(dict_file_text)
+        word_count, bigram_count = process_dict(dict_file_text, force)
 
         # Computing probability distributions
         print("Computing probability distributions...")
@@ -201,13 +204,13 @@ def main(argv):
         # Segmenting words from concatenated text
         print("Segmenting words...")
         segment_words.results.clear()
-        segmented_text = segment_words(concatenated_file_text)
+        segmented_text = segment_words(concatenated_file_text, max_length)
         segmented_text = ' '.join([w.strip() for w in segmented_text])
         segmented_text = mark_unknown_words(segmented_text, word_count.keys())
 
         # Final output
         print("Concatenated text:", concatenated_file_text)
-        print("Segmented text:", ' '.join(segmented_text))
+        print("Segmented text:", segmented_text)
         print("Unrecognized characters: ", accuracy(segmented_text))
 
     except IOError as err:
