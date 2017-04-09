@@ -7,12 +7,23 @@ DICT_FILE = "text8.zip"
 DICT_FILE_SIZE = 31344016
 last_percent_reported = None
 
+def preprocess_text8(data):
+    """
+    Text8 dataset contains a lot of single-letter words.
+    We have to remove those letters before working with the dataset
+    """
+    words = [w for w in data.split(" ") if len(w) > 1]
+    words.append('a')
+    words.append('i')
+    return ' '.join(words)
+
+
 def read_dict_file(filename=DICT_FILE):
     """Open zipfile read all data and return"""
     with zipfile.ZipFile(filename) as f:
         name = f.namelist()[0]
         data = f.read(name)
-    return data
+    return preprocess_text8(data)
 
 def download_progress_hook(count, blockSize, totalSize):
     """A hook to report the progress of a download. Reports every 5% change in download progress."""
