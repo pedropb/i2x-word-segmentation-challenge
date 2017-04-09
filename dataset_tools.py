@@ -3,7 +3,7 @@ from six.moves.urllib.request import urlretrieve
 import zipfile
 
 DICT_FILE_URL = 'http://mattmahoney.net/dc/'
-DICT_FILE = os.path.join(os.path.dirname((os.path.realpath(__file__))), "text8.zip")
+DICT_FILE = "text8.zip"
 DICT_FILE_SIZE = 31344016
 last_percent_reported = None
 

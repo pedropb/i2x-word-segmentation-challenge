@@ -6,7 +6,6 @@ import dataset_tools
 from probs import prob_bigrams, prob
 from utils import load_pickle, save_pickle, memoize
 from collections import Counter
-from six.moves import cPickle as pickle
 from six.moves import range
 from sgt import simpleGoodTuringProbs as sgt
 
@@ -35,11 +34,11 @@ def process_dict(text):
     """
 
     BIGRAM_COUNT_PICKLE = "bigram_count.pickle"
-    BIGRAM_COUNT = 1213123
+    BIGRAM_COUNT = 4146849
     WORD_COUNT_PICKLE = "word_count.pickle"
     WORD_COUNT = 253855
 
-    print("Processing dictionary. This will take a while.")
+    print("Processing dictionary. This might take a while.")
 
     # Try to load previous word_count
     word_count = load_pickle(WORD_COUNT_PICKLE, WORD_COUNT)

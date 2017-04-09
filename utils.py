@@ -1,3 +1,6 @@
+import os
+from six.moves import cPickle as pickle
+
 def memoize(f):
     """Memoize function to cache results from function f"""
     results = {}
@@ -19,7 +22,7 @@ def load_pickle(filename, expected_size):
                 os.remove(filename)
                 pickled_data = None
         except:
-            os.remove(WORD_COUNT_PICKLE)
+            os.remove(filename)
             pickled_data = None
 
     return pickled_data
