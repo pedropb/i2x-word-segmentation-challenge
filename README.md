@@ -97,3 +97,4 @@ Unrecognized characters:  13
 - This implementation was based on [Peter Norwig's work](http://norvig.com/ipython/).
 - It doesn't always output the optimal solution, but it comes close to what a human would expect.
 - Changing the `--max-length` argument can provide various results for the same input.
+- Use `--force`, when you need to force counting the words and bigrams from the dictionary again.
