@@ -16,7 +16,7 @@ def count_words(text):
     return dict(Counter(words).most_common())
 
 def count_bigrams(text):
-     """Count bigram occurences"""
+    """Count bigram occurences"""
     words = text.split(" ")
     bigrams = [b for b in zip(words[:-1], words[1:])]
     return dict(Counter(bigrams).most_common())
@@ -173,7 +173,7 @@ def main(argv):
 
         # Final output
         print("Concatenated text:", concatenated_file_text)
-        print("Sgemented text:", ' '.join(segmented_text)
+        print("Segmented text:", ' '.join(segmented_text))
         print("Unrecognized characters: ", accuracy(segmented_text))
 
     except IOError as err:
@@ -183,8 +183,6 @@ def main(argv):
     except:
         raise
         print("Unexpected error")
-
-
 
 if __name__ == "__main__":
     main(sys.argv[1:])

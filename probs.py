@@ -10,8 +10,8 @@ def prob(counter):
 def prob_bigrams(words, prev='^', ):
     """Probability of occurrence of a sequence of words, using bigram counter."""
     return reduce(operator.mul,  
-        cond_prob(w,
-            [prev if (i == 0) else words[i-1]] for (i, w) in enumerate(words)),
+        (cond_prob(w,
+            (prev if (i == 0) else words[i-1] for (i, w) in enumerate(words)))),
         initial=1)
 
 def prob_words(words):
