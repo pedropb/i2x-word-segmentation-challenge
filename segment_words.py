@@ -1,13 +1,19 @@
 #!/usr/bin/python
 
 from __future__ import print_function
+from __future__ import division
 import sys, argparse, os
 import dataset_tools
-from probs import prob_bigrams, prob
 from utils import load_pickle, save_pickle, memoize
 from collections import Counter
+from functools import reduce 
+import operator
 from six.moves import range
 from sgt import pdist_good_turing_hack as sgt
+import re
+
+P_BIGRAMS = {}
+P_WORDS = {}
 
 def count_words(text):
     """Count word occurences"""
@@ -60,6 +66,32 @@ def process_dict(text):
     assert(type(word_count) == dict and type(bigram_count) == dict)
 
     return word_count, bigram_count
+
+def prob(counter):
+    """Probability of occurrence of each element from a counter."""
+    corpus_size = sum(counter.values())
+    return lambda el: float(counter[el]) / corpus_size
+
+def prob_bigrams(words, prev='^', ):
+    """Probability of occurrence of a sequence of words, using bigram counter."""
+    return reduce(operator.mul,  
+        (cond_prob(w, (prev if (i == 0) else words[i-1]) )
+                   for (i, w) in enumerate(words)),
+        initial=1)
+
+def prob_words(words):
+    """Probability of occurrence of words (assuming they are independent of each others)"""
+    return reduce(operator.mul, [P_WORDS(w) for w in words], initial=1)
+
+def cond_prob(word, prev):
+    """Conditional probability of word given previous word."""
+    
+    bigram = (prev, word)
+    if P_BIGRAMS(bigram) > 0 and P_WORDS(prev) > 0:
+        return float(P_BIGRAMS(bigram)) / P_WORDS(prev)
+    else: # non-zero probability
+        return P_WORDS(word) / 2.0
+
 
 @memoize
 def segment_words(text, previous='^'):
@@ -149,6 +181,9 @@ def main(argv):
         concatenated_file_text = ""
         with open(args.concatenated_file) as f:
             concatenated_file_text = f.read()
+
+        concatenated_file_text = concatenated_file_text.lower()
+        concatenated_file_text = re.sub("[^a-z ]", "", concatenated_file_text, )
 
         if len(concatenated_file_text.strip()) == 0:
             print("concatenated_file is empty.")
