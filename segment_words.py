@@ -7,7 +7,7 @@ from probs import prob_bigrams, prob
 from utils import load_pickle, save_pickle, memoize
 from collections import Counter
 from six.moves import range
-from sgt import simpleGoodTuringProbs as sgt
+from sgt import pdist_good_turing_hack as sgt
 
 def count_words(text):
     """Count word occurences"""
@@ -37,8 +37,6 @@ def process_dict(text):
     BIGRAM_COUNT = 4146849
     WORD_COUNT_PICKLE = "word_count.pickle"
     WORD_COUNT = 253855
-
-    print("Processing dictionary. This might take a while.")
 
     # Try to load previous word_count
     word_count = load_pickle(WORD_COUNT_PICKLE, WORD_COUNT)
@@ -73,11 +71,11 @@ def segment_words(text, previous='^'):
         return []
     else:
         candidates = [[first] + segment_words(rest, first) 
-                      for (first, rest) in split_text(concatenated_text, 1)]
+                      for (first, rest) in split_text(text, 1)]
 
         return max(
             candidates, 
-            key=lambda words: prob_bigrams(words, P_BIGRAMS, P_WORDS, previous)
+            key=lambda words: prob_bigrams(words, previous)
         )
 
 def split_text(text, start=0, length=20):
@@ -155,16 +153,18 @@ def main(argv):
         if len(concatenated_file_text.strip()) == 0:
             print("concatenated_file is empty.")
               
-        # Processing dictionary
+        print("Processing dictionary. This might take a while.")
         word_count, bigram_count = process_dict(dict_file_text)
 
         # Computing probability distributions
+        print("Computing probability distributions...")
         global P_BIGRAMS
         global P_WORDS
         P_BIGRAMS = prob(bigram_count)
         P_WORDS = sgt(word_count)
 
         # Segmenting words from concatenated text
+        print("Segmenting words...")
         segment_words.results.clear()
         segmented_text = segment_words(concatenated_file_text)
         segmented_text = ' '.join([w.strip() for w in segmented_text])

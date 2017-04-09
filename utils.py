@@ -4,10 +4,11 @@ from six.moves import cPickle as pickle
 def memoize(f):
     """Memoize function to cache results from function f"""
     results = {}
-    def helper(n):
+    def helper(*n):
         if n not in results:
             results[n] = f(n)
         return results[n]
+    helper.results = results
     return helper
 
 def load_pickle(filename, expected_size):
