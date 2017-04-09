@@ -11,7 +11,7 @@ def memoize(f):
     helper.results = results
     return helper
 
-def load_pickle(filename, expected_size):
+def load_pickle(filename):
     """Load pickle file. Returns the object loaded or None if failed"""
 
     pickled_data = None
@@ -19,9 +19,6 @@ def load_pickle(filename, expected_size):
         try:
             with open(filename, 'r') as f:
                 pickled_data = pickle.load(f)
-            if len(pickled_data) != expected_size:
-                os.remove(filename)
-                pickled_data = None
         except:
             os.remove(filename)
             pickled_data = None
