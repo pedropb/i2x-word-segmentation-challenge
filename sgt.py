@@ -1,4 +1,9 @@
+from __future__ import division
 from collections import Counter
+
+"""This implementation was retrieved from http://nbviewer.jupyter.org/url/norvig.com/ipython/How%20to%20Do%20Things%20with%20Words.ipynb#(9)-Theory-and-Practice:-Smoothing
+Credits to Peter Norvig
+"""
 
 def pdist_good_turing_hack(counter, base=1/26., prior=1e-8):
     """The probability of word, given evidence from the counter.
